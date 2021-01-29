@@ -1,0 +1,31 @@
+{{ block "body" . }}
+<div style="border: 1px solid #cccccc; padding:2em">
+    <form>
+        <table>
+            <tr>
+                <td style="text-align:right">e-mail</td>
+                <td><input type="email" placeholder="請輸入您的 E-Mail 信箱"><span
+                        style="padding-left:1em; color:red; font-size: small;">錯誤訊息</span></td>
+            </tr>
+            <tr>
+                <td style="text-align:right">暱稱</td>
+                <td><input type="text" placeholder="請取一個暱稱"><span
+                        style="padding-left:1em; color:red; font-size: small;">錯誤訊息</span></td>
+            </tr>
+            <tr>
+                <td style="text-align:right">密碼</td>
+                <td><input type="password" placeholder="請輸入密碼"><span
+                        style="padding-left:1em; color:red; font-size: small;">錯誤訊息</span></td>
+            </tr>
+            <tr>
+                <td style="text-align:right">確認密碼</td>
+                <td><input type="password" placeholder="請重新輸入一次密碼"><span
+                        style="padding-left:1em; color:red; font-size: small;">錯誤訊息</span></td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align: right;"><button>註冊</button></td>
+            </tr>
+        </table>
+    </form>
+</div>
+{{ end }}

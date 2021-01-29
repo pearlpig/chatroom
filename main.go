@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 
 	"net/http"
 
@@ -11,21 +12,24 @@ import (
 	"github.com/urfave/negroni"
 )
 
+// Server ...
 func main() {
-	// set the server parameter
 	host := "127.0.0.1"
-	port := "8080"
+	port := "8081"
 
 	r := mux.NewRouter()
-
-	// set the file server
 	fs := http.FileServer(http.Dir("./public"))
-	// listen js file
-	r.PathPrefix("/js/").Handler(fs)
-	// listen css file
-	r.PathPrefix("/css/").Handler(fs)
 
+	r.PathPrefix("/js/").Handler(fs)
+	r.PathPrefix("/css/").Handler(fs)
 	r.HandleFunc("/", indexHandler)
+
+	r.HandleFunc("/login", showLoginHandler).Methods("GET")
+
+	r.HandleFunc("/signup", showSignupHandler).Methods("GET")
+	r.HandleFunc("/createroom", showCreateRoomHandler).Methods("GET")
+	r.HandleFunc("/chatroom", showChatRoomHandler).Methods("GET")
+
 	/* Create the logger for the web application. */
 	l := log.New()
 
@@ -42,5 +46,50 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Welcome!")
+	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
+	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/index.html"))
+
+	tmpl.ExecuteTemplate(w, "template", struct {
+		Title string
+	}{
+		"首頁",
+	})
+}
+
+func showLoginHandler(w http.ResponseWriter, r *http.Request) {
+	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
+	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/login.html"))
+
+	tmpl.ExecuteTemplate(w, "template", struct {
+		Title string
+	}{Title: "聊天室登入"})
+}
+
+func showSignupHandler(w http.ResponseWriter, r *http.Request) {
+	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
+	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/signup.html"))
+
+	tmpl.ExecuteTemplate(w, "template", struct {
+		Title string
+	}{Title: "聊天室註冊"})
+}
+
+func showCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
+	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
+	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/create_room.html"))
+
+	tmpl.ExecuteTemplate(w, "template", struct {
+		Title string
+	}{Title: "建立聊天室"})
+}
+
+func showChatRoomHandler(w http.ResponseWriter, r *http.Request) {
+	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
+	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/chat.html"))
+	var roomName string = "room"
+	tmpl.ExecuteTemplate(w, "template", struct {
+		Title string
+	}{
+		Title: roomName,
+	})
 }
