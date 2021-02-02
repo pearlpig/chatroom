@@ -13,7 +13,7 @@ func insert() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	insert, err := db.Exec("INSERT INTO member (id,email,password,nickname,created,updated) VALUES(?,?,?,?,now(),now())", nil, "123@123", "asd", "hi")
+	insert, err := db.Exec("insert  into member (id,email,password,nickname,created,updated) VALUES(?,?,?,?,now(),now())", nil, "123@123", "asd", "hi")
 	if err != nil {
 		panic(err)
 	}
