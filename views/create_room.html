@@ -1,11 +1,10 @@
 {{ block "body" . }}
 <div style="border: 1px solid #cccccc; padding:2em">
-    <form>
+    <form action="/create" id="createRoomForm">
         <table>
             <tr>
                 <td style="text-align:right">聊天室名稱</td>
-                <td><input type="text" placeholder="請輸入名稱"><span
-                        style="padding-left:1em; color:red; font-size: small;">錯誤訊息</span></td>
+                <td><input name="roomName" type="text" placeholder="請輸入名稱"><span id="createRoomNameErrMsg" style="padding-left:1em; color:red; font-size: small;"></span></td>
             </tr>
             <tr>
                 <td colspan="2" style="text-align: right;"><button>建立</button></td>

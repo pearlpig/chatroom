@@ -1,8 +1,8 @@
 {{ block "body" .}}
 
 <div style="border: 1px solid #cccccc; padding:2em">
-    <a id="loginPage" href="#">登入</a>
-    <a id="signupPage" href="#">註冊</a>
+    <a id="toLoginPage" href="#">登入</a>
+    <a id="toSignupPage" href="#">註冊</a>
     <span id="memberIndex" style="font-weight: bold"><a id="logout" href="#">登出</a><a id="createroomPage" href="#">建立聊天室</a></span>
     <h3>目前聊天室</h3>
     <table>
@@ -13,30 +13,11 @@
                 <th>操作</th>
             </tr>
         </thead>
-        <tbody>
-            <tr>
-                <td><a id="chatroomPage" href="#">聊天室 1</a></td>
-                <td>室長 1</td>
-                <td><a href="#">進入</a></td>
-            </tr>
-            <tr>
-                <td><a href="#">聊天室 2</a></td>
-                <td>室長 2</td>
-                <td><a href="#">進入</a></td>
-            </tr>
+        <tbody id="chatroomList">
         </tbody>
     </table>
     <table>
-        <tr>
-            <td><a href="#">第一頁</a></td>
-            <td><a href="#">前一頁</a></td>
-            <td><a href="#">1</a></td>
-            <td><a href="#">2</a></td>
-            <td><a href="#">3</a></td>
-            <td><a href="#">4</a></td>
-            <td><a href="#">5</a></td>
-            <td><a href="#">下一頁</a></td>
-            <td><a href="#">最後一頁</a></td>
+        <tr name="pageList">
         </tr>
     </table>
 </div>

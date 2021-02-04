@@ -67,7 +67,7 @@ func createChatroomTable() {
 	}
 	defer db.Close()
 
-	_, err = db.Exec("create table if not exists chatroom (id int primary key auto_increment, title varchar(100) unique key not null, member_id int, created datetime, updated datetime);")
+	_, err = db.Exec("create table if not exists chatroom (id int primary key auto_increment, title varchar(100) unique key not null, member_id int, created datetime default current_timestamp,updated datetime default current_timestamp,foreign key(number_id) references member(id);")
 	if err != nil {
 		panic(err)
 	}

@@ -17,7 +17,12 @@ import (
 	"github.com/urfave/negroni"
 )
 
-var userList = make(map[int]*model.Member)
+// Cookies ...
+type Cookies struct {
+	MemberID int    `json:"member_id,omitempty"`
+	Nickname string `json:"nickname,omitempty"`
+	RoomID   int    `json:"room_id,omitempty"`
+}
 
 // Server ...
 func Server() {
@@ -30,9 +35,11 @@ func Server() {
 	r.PathPrefix("/js/").Handler(fs)
 	r.PathPrefix("/css/").Handler(fs)
 
-	r.HandleFunc("/", indexHandler)
+	r.HandleFunc("/", indexHandler).Methods("GET")
+	r.HandleFunc("/", getRoomListHandler).Methods("POST")
 
-	r.HandleFunc("/checkMember", checkMemberHandler)
+	r.HandleFunc("/checkMember", checkCookieHandler)
+
 	r.HandleFunc("/login", showLoginHandler).Methods("GET")
 	r.HandleFunc("/login", doLoginHandler).Methods("POST")
 	r.HandleFunc("/logout", logoutHandler)
@@ -40,8 +47,11 @@ func Server() {
 	r.HandleFunc("/signup", showSignupHandler).Methods("GET")
 	r.HandleFunc("/signup", doSignupHandler).Methods("POST")
 
-	r.HandleFunc("/createroom", showCreateRoomHandler).Methods("GET")
-	r.HandleFunc("/chatroom", showChatRoomHandler).Methods("GET")
+	r.HandleFunc("/create", showCreateRoomHandler).Methods("GET")
+	r.HandleFunc("/create", doCreateRoomHandler).Methods("POST")
+
+	r.HandleFunc("/room/{[0~9]+}", showChatRoomHandler).Methods("GET")
+	r.HandleFunc("/enterRoom", getRoomListHandler).Methods("GET")
 
 	/* Create the logger for the web application. */
 	l := log.New()
@@ -58,25 +68,36 @@ func Server() {
 	log.Fatal(server.ListenAndServe())
 }
 
-func checkMemberHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := r.Cookie("userId")
+func checkCookieHandler(w http.ResponseWriter, r *http.Request) {
+
+	cookie := &Cookies{MemberID: -1, Nickname: ""}
+
+	id, err := r.Cookie("memberID")
 	if err != nil {
 		log.Println("Error:", err)
-		userInfo, _ := json.Marshal(&model.Member{ID: -1})
+		userInfo, _ := json.Marshal(cookie)
 		w.Write(userInfo)
 		return
 	}
 	i, _ := strconv.Atoi(id.Value)
-	userInfo, err := json.Marshal(userList[i])
+	cookie.MemberID = i
 	if err != nil {
 		log.Println("Error:", err)
-		userInfo, _ := json.Marshal(&model.Member{ID: -1})
+		userInfo, _ := json.Marshal(cookie)
 		w.Write(userInfo)
 		return
 	}
+	nickname, err := r.Cookie("nickname")
+	if err != nil {
+		log.Println("Error:", err)
+		userInfo, _ := json.Marshal(cookie)
+		w.Write(userInfo)
+		return
+	}
+	cookie.Nickname = nickname.Value
+	userInfo, _ := json.Marshal(cookie)
 	w.Write(userInfo)
 }
-
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
 	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/index.html"))
@@ -106,29 +127,26 @@ func doLoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error:", err)
 	}
-	log.Println(form)
-	checkMemberInfo := model.CheckLogin(form)
-	if checkMemberInfo.Status == 0 {
-		cookie := http.Cookie{Name: "userId", Value: strconv.Itoa(checkMemberInfo.MemberInfo.ID), MaxAge: 365 * 24 * 60 * 60}
-		http.SetCookie(w, &cookie)
-		userList[checkMemberInfo.MemberInfo.ID] = checkMemberInfo.MemberInfo
+	res := model.CheckLogin(form)
+	if res.Status.Code == 0 {
+		c1 := http.Cookie{Name: "memberID", Value: strconv.Itoa(res.Data.ID), MaxAge: 365 * 24 * 60 * 60}
+		c2 := http.Cookie{Name: "nickname", Value: res.Data.Nickname, MaxAge: 365 * 24 * 60 * 60}
+		http.SetCookie(w, &c1)
+		http.SetCookie(w, &c2)
 	}
 
-	result, err := json.Marshal(checkMemberInfo)
-
+	result, err := json.Marshal(res.Status)
 	w.Write(result)
 
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := r.Cookie("userId")
+	_, err := r.Cookie("memberID")
 	if err != nil {
 		log.Println("Error:", err)
 		return
 	}
-	i, _ := strconv.Atoi(id.Value)
-	userList[i] = nil
-	cookie := http.Cookie{Name: "userId", MaxAge: -1}
+	cookie := http.Cookie{Name: "memberID", MaxAge: -1}
 	http.SetCookie(w, &cookie)
 	return
 }
@@ -152,18 +170,19 @@ func doSignupHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error:", err)
 	}
 	log.Println(form)
-	signupInfo := model.CheckSignup(form)
-	if signupInfo.Status == 0 {
-		cookie := http.Cookie{Name: "userId", Value: strconv.Itoa(signupInfo.MemberInfo.ID), MaxAge: 365 * 24 * 60 * 60}
-		http.SetCookie(w, &cookie)
-		userList[signupInfo.MemberInfo.ID] = signupInfo.MemberInfo
+	res := model.CheckSignup(form)
+	if res.Status.Code == 0 {
+		c1 := http.Cookie{Name: "memberID", Value: strconv.Itoa(res.Data.ID), MaxAge: 365 * 24 * 60 * 60}
+		c2 := http.Cookie{Name: "nickname", Value: res.Data.Nickname, MaxAge: 365 * 24 * 60 * 60}
+		http.SetCookie(w, &c1)
+		http.SetCookie(w, &c2)
 	}
-
-	result, err := json.Marshal(signupInfo)
-
+	result, err := json.Marshal(res.Status)
 	w.Write(result)
 
 }
+
+// create room
 func showCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
 	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/create_room.html"))
@@ -171,6 +190,34 @@ func showCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, "template", struct {
 		Title string
 	}{Title: "建立聊天室"})
+}
+
+func doCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
+	id, _ := r.Cookie("memberID")
+	i, err := strconv.Atoi(id.Value)
+	if err != nil {
+		log.Println("Error:", err)
+	}
+	var form model.CreateRoomForm
+	err = r.ParseForm()
+
+	err = schema.NewDecoder().Decode(&form, r.PostForm)
+	if err != nil {
+		log.Println("Error:", err)
+	}
+	form.MemberID = i
+	res := model.CheckCreate(form)
+	if res.Status.Code == 0 {
+		c := http.Cookie{Name: "roomID", Value: strconv.Itoa(res.Data.ID), MaxAge: 365 * 24 * 60 * 60}
+		http.SetCookie(w, &c)
+	}
+
+	result, err := json.Marshal(res)
+	if err != nil {
+		log.Println("Error: ", err)
+	}
+	w.Write(result)
+
 }
 
 func showChatRoomHandler(w http.ResponseWriter, r *http.Request) {
@@ -182,4 +229,31 @@ func showChatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		Title: roomName,
 	})
+}
+
+// Show ...
+type Show struct {
+	Page int
+}
+
+func getRoomListHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("Error:", err)
+	}
+
+	var reqRoom Show
+	// reqRoom := struct{ page int }{}
+	err = schema.NewDecoder().Decode(&reqRoom, r.PostForm)
+	if err != nil {
+		log.Println("Error:", err)
+	}
+	// log.Println(reqRoom)
+	roomList := model.GetRoom(reqRoom.Page)
+	result, err := json.Marshal(roomList)
+	if err != nil {
+		log.Println("Error: ", err)
+	}
+	// log.Println(roomList)
+	w.Write(result)
 }
