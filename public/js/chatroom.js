@@ -1,161 +1,6 @@
-window.onload = function() {
+$(function() {
     addPage()
     show(1)
-
-    // check member
-    $.ajax({
-        type: "GET",
-        url: "/checkMember",
-        beforeSend: function() {
-            $("#memberIndex").hide()
-        },
-        success: function(data) {
-            console.log(data)
-            let result = JSON.parse(data)
-            console.log(data)
-            if (result == null || result.member_id == -1) {
-                return
-            }
-            $("#toLoginPage").hide()
-            $("#toSignupPage").hide()
-            $("#memberIndex").show()
-            var oMemberBar = document.getElementById('memberIndex');
-            oMemberBar.insertAdjacentText("afterbegin", "hi, " + result.nickname)
-        }
-    });
-
-    $('a[class*="pageBtn"]').click(function() {
-        let page = parseInt(this.name)
-        show(page)
-    })
-    $('a[class*="first"]').click(function() {
-
-        show(1)
-    })
-    $('a[class="last"]').click(function() {
-        show(10)
-    })
-    $('a[class="prev"]').click(function() {
-        // var nowPage = $('a[class*="prev"]').parent().next()
-        let nowPage
-        for (nowPage = $('a[class*="prev"]').parent().next(); nowPage.attr('style'); nowPage = nowPage.next()) {
-
-        }
-        nowPage = parseInt(nowPage.attr('name'))
-        if (nowPage == 1) {
-            show(1)
-
-        } else {
-            show(nowPage - 1)
-        }
-    })
-    $('a[class*="next"]').click(function() {
-            let nowPage
-            for (nowPage = $('a[class*="prev"]').parent().next(); nowPage.attr('style'); nowPage = nowPage.next()) {
-
-            }
-            nowPage = parseInt(nowPage.attr('name'))
-            if (nowPage == 10) {
-                show(10)
-
-            } else {
-                show(nowPage + 1)
-            }
-        })
-        // login in
-    $("#toLoginPage").click(function() {
-        location.href = "/login"
-    })
-    $("#loginForm").submit(function(e) {
-
-        e.preventDefault(); // avoid to execute the actual submit of the form.
-
-        var form = $(this);
-        var url = form.attr('action');
-        $.ajax({
-            type: "POST",
-            url: url,
-            data: form.serialize(), // serializes the form's elements.
-            beforeSend: function() {
-                $('span[name*="emailErrMsg"]').hide()
-                $('span[name*="passwordErrMsg"]').hide()
-            },
-            success: function(data) {
-                let result = JSON.parse(data);
-                if (result.code == 0) {
-                    location.href = "/"
-                } else if (result.code == 1) {
-                    $("#loginEmailErrMsg").show()
-                        // $('span[name*="emailErrMsg"]').css({ visibility: "visible" });
-                    $("#loginEmailErrMsg").text(result.msg)
-                } else if (result.code == 2) {
-                    $("#loginPasswordErrMsg").show()
-                        // $('span[name*="passwordErrMsg"]').css({ visibility: "visible" });
-                    $("#loginPasswordErrMsg").text(result.msg)
-                } else {
-                    alert("invalid status")
-                }
-            }
-        });
-
-
-    });
-    // logout
-    $("#logout").click(function() {
-        $.ajax({
-            type: "GET",
-            url: "/logout",
-            success: function(data) {
-                location.href = "/"
-            }
-        });
-    })
-
-    // sign up 
-    $("#toSignupPage").click(function() {
-        console.log("signup")
-        location.href = "/signup"
-    })
-
-    $("#signupForm").submit(function(e) {
-
-        e.preventDefault(); // avoid to execute the actual submit of the form.
-
-        var form = $(this);
-
-        console.log(form)
-        var url = form.attr('action');
-        $.ajax({
-            type: "POST",
-            url: url,
-            data: form.serialize(), // serializes the form's elements.
-            beforeSend: function() {
-                $("#signupEmailErrMsg").hide()
-                $("#signupNicknameErrMsg").hide()
-            },
-            success: function(data) {
-                // console.log(data)
-                let result = JSON.parse(data);
-                console.log(result)
-                if (result.code == 0) {
-                    location.href = "/"
-                } else if (result.code == 1) {
-                    $("#signupEmailErrMsg").show()
-                        // $('span[name*="emailErrMsg"]').css({ visibility: "visible" });
-                    $("#signupEmailErrMsg").text(result.msg)
-                } else if (result.code == 2) {
-                    $("#signupNicknameErrMsg").show()
-                        // $('span[name*="passwordErrMsg"]').css({ visibility: "visible" });
-                    $("#signupNicknameErrMsg").text(result.msg)
-
-                } else {
-                    alert("invalid status")
-                }
-            }
-        });
-
-
-    });
 
     $("#createroomPage").click(function() {
         console.log("create")
@@ -195,13 +40,51 @@ window.onload = function() {
 
 
     });
-    $("#chatroomPage").click(function() {
-        location.href = "/chatroom"
+
+
+    $('a[class*="pageBtn"]').click(function() {
+        let page = parseInt(this.name)
+        show(page)
+
     })
-}
+    $('a[class*="first"]').click(function() {
+
+        show(1)
+    })
+    $('a[class="last"]').click(function() {
+        show(10)
+    })
+    $('a[class="prev"]').click(function() {
+        // var nowPage = $('a[class*="prev"]').parent().next()
+        let nowPage
+        for (nowPage = $('a[class*="prev"]').parent().next(); nowPage.attr('style'); nowPage = nowPage.next()) {
+
+        }
+        nowPage = parseInt(nowPage.attr('name'))
+        if (nowPage == 1) {
+            show(1)
+
+        } else {
+            show(nowPage - 1)
+        }
+    })
+    $('a[class*="next"]').click(function() {
+        let nowPage
+        for (nowPage = $('a[class*="prev"]').parent().next(); nowPage.attr('style'); nowPage = nowPage.next()) {
+
+        }
+        nowPage = parseInt(nowPage.attr('name'))
+        if (nowPage == 10) {
+            show(10)
+
+        } else {
+            show(nowPage + 1)
+        }
+    })
+
+})
 
 function show(page) {
-    console.log(page)
     let wanted = { "page": page }
     $.ajax({
         method: "POST",
@@ -215,20 +98,18 @@ function show(page) {
             roomList.forEach(room => {
                 showRoom(room.id, room.title, room.nickname)
             })
-
             showPage(page)
         }
     })
 }
 
 
-
 function showRoom(id, title, nickname) {
     var td1 = $('<td>').attr("class", "roomName")
-    var a1 = $('<a>').attr('href', '/room/' + id).text(title)
+    var a1 = $('<a>').attr('href', '/room/' + id).attr("class", "roomBtn").attr('name', id).text(title)
     var td2 = $('<td>').text(nickname);
     var td3 = $('<td>').attr("class", "roomEntry")
-    var a2 = $('<a>').attr('href', '/room/' + id).text('進入')
+    var a2 = $('<a>').attr('href', '/room/' + id).attr("class", "roomBtn").attr('name', id).text('進入')
     td1.append(a1)
     td3.append(a2)
     var tr = $('<tr>').attr("class", "room").append(td1, td2, td3);

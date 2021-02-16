@@ -248,9 +248,29 @@ func GetRoom(page int) []*Room {
 	for rows.Next() {
 		room := &Room{}
 		rows.Scan(&room.ID, &room.Title, &room.MemberID, &room.Nickname)
-		log.Println(room)
 		roomList = append(roomList, room)
 	}
 
 	return roomList
+}
+
+// GetRoomName ...
+func GetRoomName(roomNum int) string {
+	db, err := Connect()
+	if err != nil {
+		log.Println("Connected Error: ", err)
+	}
+	defer db.Close()
+	// log.Println(page)
+	rows, err := db.Query("select title from chatroom where id=?", roomNum)
+	if err != nil {
+		log.Println("Error: ", err)
+	}
+	defer rows.Close()
+	roomName := ""
+	for rows.Next() {
+		rows.Scan(&roomName)
+	}
+
+	return roomName
 }

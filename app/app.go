@@ -12,22 +12,33 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
+	"github.com/gorilla/securecookie"
 	negronilogrus "github.com/meatballhat/negroni-logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 )
 
+const (
+	hashKey    = "qtm^ac',{6t=&_mK9v%ngG/P'B?A!.(?)c^CQr-s{QZCF>Y4c=R&eyPqagBH(.9d"
+	blockKey   = "m5cV7vY[4*5%7b{_"
+	cookieName = "chatroom"
+)
+
+var secureC *securecookie.SecureCookie
+
 // Cookies ...
 type Cookies struct {
-	MemberID int    `json:"member_id,omitempty"`
-	Nickname string `json:"nickname,omitempty"`
-	RoomID   int    `json:"room_id,omitempty"`
+	MemberID int    `json:"member_id"`
+	Nickname string `json:"nickname"`
+	RoomID   int    `json:"room_id"`
 }
 
 // Server ...
 func Server() {
 	host := "127.0.0.1"
 	port := "8080"
+
+	secureC = securecookie.New([]byte(hashKey), []byte(blockKey))
 
 	r := mux.NewRouter()
 	fs := http.FileServer(http.Dir("./public"))
@@ -37,8 +48,6 @@ func Server() {
 
 	r.HandleFunc("/", indexHandler).Methods("GET")
 	r.HandleFunc("/", getRoomListHandler).Methods("POST")
-
-	r.HandleFunc("/checkMember", checkCookieHandler)
 
 	r.HandleFunc("/login", showLoginHandler).Methods("GET")
 	r.HandleFunc("/login", doLoginHandler).Methods("POST")
@@ -50,12 +59,21 @@ func Server() {
 	r.HandleFunc("/create", showCreateRoomHandler).Methods("GET")
 	r.HandleFunc("/create", doCreateRoomHandler).Methods("POST")
 
-	r.HandleFunc("/room/{[0~9]+}", showChatRoomHandler).Methods("GET")
-	r.HandleFunc("/enterRoom", getRoomListHandler).Methods("GET")
+	// s := r.PathPrefix("/room/{[0~9]+}").Subrouter()
+	s := r.PathPrefix("/room/{roomID:[0-9]+}").Subrouter()
+	s.HandleFunc("", chatRoomHandler).Methods("GET")
+
+	// s.HandleFunc("/echo", wsHandler)
+	s.HandleFunc("/echo", wsHandler)
+	s.HandleFunc("/connRoom", connRoomHandler)
+	s.HandleFunc("/disconnRoom", disconnRoomHandler)
+
+	//
+	r.HandleFunc("/check", memberAuthHandler)
 
 	/* Create the logger for the web application. */
 	l := log.New()
-
+	// r.Use(memberAuthHandler)
 	n := negroni.New()
 	n.Use(negronilogrus.NewMiddlewareFromLogger(l, "web"))
 	n.UseHandler(r)
@@ -65,39 +83,85 @@ func Server() {
 		Handler: n,
 	}
 
+	go broker()
+	go dispensor()
+
 	log.Fatal(server.ListenAndServe())
 }
 
-func checkCookieHandler(w http.ResponseWriter, r *http.Request) {
+func chatRoomHandler(w http.ResponseWriter, r *http.Request) {
+	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
+	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/chat.html"))
 
-	cookie := &Cookies{MemberID: -1, Nickname: ""}
+	vars := mux.Vars(r)
+	roomID, err := strconv.Atoi(vars["roomID"])
+	if err != nil {
+		log.Println("Error: ", err, " roomID is not number.")
+	}
+	roomName := model.GetRoomName(roomID)
 
-	id, err := r.Cookie("memberID")
-	if err != nil {
-		log.Println("Error:", err)
-		userInfo, _ := json.Marshal(cookie)
-		w.Write(userInfo)
-		return
-	}
-	i, _ := strconv.Atoi(id.Value)
-	cookie.MemberID = i
-	if err != nil {
-		log.Println("Error:", err)
-		userInfo, _ := json.Marshal(cookie)
-		w.Write(userInfo)
-		return
-	}
-	nickname, err := r.Cookie("nickname")
-	if err != nil {
-		log.Println("Error:", err)
-		userInfo, _ := json.Marshal(cookie)
-		w.Write(userInfo)
-		return
-	}
-	cookie.Nickname = nickname.Value
-	userInfo, _ := json.Marshal(cookie)
-	w.Write(userInfo)
+	tmpl.ExecuteTemplate(w, "template", struct {
+		Title string
+	}{
+		Title: roomName,
+	})
 }
+func memberAuthHandler(w http.ResponseWriter, r *http.Request) {
+	auth := &Cookies{MemberID: -1, Nickname: "", RoomID: -1}
+	i, err := r.Cookie(cookieName)
+	if err != nil {
+		log.Println("Error:", err)
+		result, _ := json.Marshal(auth)
+		w.Write(result)
+		return
+	}
+	value := &Cookies{}
+	if err := secureC.Decode(cookieName, i.Value, value); err != nil {
+		log.Println("decode secure cookie:", err)
+		result, _ := json.Marshal(auth)
+		w.Write(result)
+		return
+	}
+	if value.MemberID == -1 {
+		result, _ := json.Marshal(auth)
+		w.Write(result)
+		return
+	}
+	result, _ := json.Marshal(value)
+	w.Write(result)
+}
+
+func redirect(w http.ResponseWriter, target string) {
+	w.Header().Set("Location", target)
+	w.WriteHeader(http.StatusFound)
+}
+
+func getCookie(w http.ResponseWriter, r *http.Request) *Cookies {
+	i, err := r.Cookie(cookieName)
+	if err != nil {
+		log.Println("Error:", err)
+		return nil
+	}
+	value := &Cookies{}
+	if err := secureC.Decode(cookieName, i.Value, value); err != nil {
+		log.Println("decode secure cookie:", err)
+		return nil
+	}
+	if err != nil {
+		log.Println("Error:", err)
+		return nil
+	}
+	return value
+}
+func setCookie(w *http.ResponseWriter, r *http.Request, cookie *Cookies) {
+	tmp, err := secureC.Encode(cookieName, cookie)
+	if err != nil {
+		log.Println("encode secure cookie:", err)
+	}
+	c := http.Cookie{Name: cookieName, Value: tmp, MaxAge: 365 * 24 * 60 * 60, Path: "/"}
+	http.SetCookie(*w, &c)
+}
+
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
 	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/index.html"))
@@ -129,25 +193,19 @@ func doLoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	res := model.CheckLogin(form)
 	if res.Status.Code == 0 {
-		c1 := http.Cookie{Name: "memberID", Value: strconv.Itoa(res.Data.ID), MaxAge: 365 * 24 * 60 * 60}
-		c2 := http.Cookie{Name: "nickname", Value: res.Data.Nickname, MaxAge: 365 * 24 * 60 * 60}
-		http.SetCookie(w, &c1)
-		http.SetCookie(w, &c2)
+		setCookie(&w, r, &Cookies{MemberID: res.Data.ID, Nickname: res.Data.Nickname})
 	}
 
 	result, err := json.Marshal(res.Status)
 	w.Write(result)
+	redirect(w, "/")
 
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	_, err := r.Cookie("memberID")
-	if err != nil {
-		log.Println("Error:", err)
-		return
-	}
-	cookie := http.Cookie{Name: "memberID", MaxAge: -1}
+	cookie := http.Cookie{Name: cookieName, Value: "", MaxAge: -1}
 	http.SetCookie(w, &cookie)
+	redirect(w, "/")
 	return
 }
 
@@ -161,15 +219,15 @@ func showSignupHandler(w http.ResponseWriter, r *http.Request) {
 
 func doSignupHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
-	var form model.SignupForm
+
 	if err != nil {
 		log.Println("Error:", err)
 	}
+	var form model.SignupForm
 	err = schema.NewDecoder().Decode(&form, r.PostForm)
 	if err != nil {
 		log.Println("Error:", err)
 	}
-	log.Println(form)
 	res := model.CheckSignup(form)
 	if res.Status.Code == 0 {
 		c1 := http.Cookie{Name: "memberID", Value: strconv.Itoa(res.Data.ID), MaxAge: 365 * 24 * 60 * 60}
@@ -218,17 +276,6 @@ func doCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(result)
 
-}
-
-func showChatRoomHandler(w http.ResponseWriter, r *http.Request) {
-	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
-	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/chat.html"))
-	var roomName string = "room"
-	tmpl.ExecuteTemplate(w, "template", struct {
-		Title string
-	}{
-		Title: roomName,
-	})
 }
 
 // Show ...
