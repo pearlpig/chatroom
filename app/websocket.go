@@ -42,19 +42,19 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
 	}
-
 	ticket := <-number
-	log.Println("門票號碼：", ticket)
-	if connList[roomID] == nil {
-		connList[roomID] = make(map[int]*SocketConn)
-	}
-	connList[roomID][ticket] = &SocketConn{Conn: conn, Cookie: cookie}
 	defer func(ticket int, conn *websocket.Conn) {
 		log.Println("disconnect !!")
 		conn.Close()
 		conn = nil
 		delete(connList[roomID], ticket)
 	}(ticket, conn)
+
+	if connList[roomID] == nil {
+		connList[roomID] = make(map[int]*SocketConn)
+	}
+	connList[roomID][ticket] = &SocketConn{Conn: conn, Cookie: cookie}
+
 	cMsg <- Message{RoomID: roomID, Nickname: []string{nickname}, Status: 1}
 	for {
 		log.Println("listening socket")
@@ -70,6 +70,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	cMsg <- Message{RoomID: roomID, Nickname: []string{nickname}, Status: 2}
 }
 
+// List ...
 type List struct {
 	Member []string
 }

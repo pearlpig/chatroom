@@ -130,13 +130,33 @@ $(function() {
 
         var form = $(this);
         var url = form.attr('action');
+        let email, pwd
+        data = form.serializeArray()
+        data.forEach(item => {
+            console.log(item)
+            if (item.name == "email") {
+                email = item.value
+            } else if (item.name == "pwd") {
+                pwd = item.value
+            }
+        })
+        console.log(email, pwd)
         $.ajax({
             type: "POST",
             url: url,
             data: form.serialize(), // serializes the form's elements.
             beforeSend: function() {
-                $('span[name*="emailErrMsg"]').hide()
-                $('span[name*="passwordErrMsg"]').hide()
+                $('#loginEmailErrMsg').hide()
+                $('#loginPasswordErrMsg').hide()
+                if (checkEmailFmt(email) !== "ok") {
+                    $('#loginEmailErrMsg').show()
+                    $('#loginEmailErrMsg').text(checkEmailFmt(email))
+                    return false
+                } else if (checkPwdFmt(pwd) !== "ok") {
+                    $('#loginPasswordErrMsg').show()
+                    $('#loginPasswordErrMsg').text(checkPwdFmt(pwd))
+                    return false
+                }
             },
             success: function(data) {
                 let result = JSON.parse(data);
@@ -175,14 +195,29 @@ $(function() {
         location.href = "/signup"
     })
 
+
     $("#signupForm").submit(function(e) {
 
         e.preventDefault(); // avoid to execute the actual submit of the form.
 
         var form = $(this);
 
-        console.log(form)
         var url = form.attr('action');
+        let email, nickname, pwd1, pwd2
+        data = form.serializeArray()
+        data.forEach(item => {
+            console.log(item)
+            if (item.name == "email") {
+                email = item.value
+            } else if (item.name == "nickname") {
+                nickname = item.value
+            } else if (item.name == "pwd1") {
+                pwd1 = item.value
+            } else if (item.name == "pwd2") {
+                pwd2 = item.value
+            }
+        })
+
         $.ajax({
             type: "POST",
             url: url,
@@ -190,9 +225,30 @@ $(function() {
             beforeSend: function() {
                 $("#signupEmailErrMsg").hide()
                 $("#signupNicknameErrMsg").hide()
+                $("#passwordErrMsg").hide()
+                $("#confirmdPasswordErrMsg").hide()
+                if (checkEmailFmt(email) !== "ok") {
+                    console.log(checkEmailFmt(email))
+                    $("#signupEmailErrMsg").show()
+                    $("#signupEmailErrMsg").text(checkEmailFmt(email))
+                    return false
+                } else if (checkNicknameFmt(nickname) !== "ok") {
+                    console.log(checkNicknameFmt(nickname))
+                    $("#signupNicknameErrMsg").show()
+                    $("#signupNicknameErrMsg").text(checkNicknameFmt(nickname))
+                    return false
+                } else if (checkPwdFmt(pwd1) !== "ok") {
+                    $("#passwordErrMsg").show()
+                    $("#passwordErrMsg").text(checkPwdFmt(pwd1))
+                    return false
+                } else if (checkPwdConfirm(pwd1, pwd2) !== "ok") {
+                    $("#confirmdPasswordErrMsg").show()
+                    $("#confirmdPasswordErrMsg").text(checkPwdConfirm(pwd1, pwd2))
+                    return false
+                }
             },
             success: function(data) {
-                // console.log(data)
+                console.log(data)
                 let result = JSON.parse(data);
                 console.log(result)
                 if (result.code == 0) {
@@ -215,3 +271,31 @@ $(function() {
 
     });
 })
+
+function checkEmailFmt(email) {
+    return "ok"
+}
+
+function checkNicknameFmt(nickname) {
+    if (nickname.length > 20) {
+        return "Nickname length should at most 20 character!"
+    } else if (nickname.length < 1) {
+        return "Nickname should not be empty!"
+    }
+    return "ok"
+}
+
+function checkPwdFmt(pwd) {
+
+    if (pwd.length < 8 || pwd.length > 128) {
+        return "Password length should between 8 to 128!"
+    }
+    return "ok"
+}
+
+function checkPwdConfirm(pwd1, pwd2) {
+    if (pwd1 !== pwd2) {
+        return "Please check the confirmed password!"
+    }
+    return "ok"
+}

@@ -89,48 +89,15 @@ func Server() {
 	log.Fatal(server.ListenAndServe())
 }
 
-func chatRoomHandler(w http.ResponseWriter, r *http.Request) {
-	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
-	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/chat.html"))
-
-	vars := mux.Vars(r)
-	roomID, err := strconv.Atoi(vars["roomID"])
-	if err != nil {
-		log.Println("Error: ", err, " roomID is not number.")
-	}
-	cookie := getCookie(w, r)
-	cookie.RoomID = roomID
-	setCookie(&w, r, cookie)
-	roomName := model.GetRoomName(roomID)
-
-	tmpl.ExecuteTemplate(w, "template", struct {
-		Title string
-	}{
-		Title: roomName,
-	})
-}
 func memberAuthHandler(w http.ResponseWriter, r *http.Request) {
 	auth := &Cookies{MemberID: -1, Nickname: "", RoomID: -1}
-	i, err := r.Cookie(cookieName)
-	if err != nil {
-		log.Println("Error:", err)
+	cookie := getCookie(w, r)
+	if cookie == nil || cookie.MemberID == -1 {
 		result, _ := json.Marshal(auth)
 		w.Write(result)
 		return
 	}
-	value := &Cookies{}
-	if err := secureC.Decode(cookieName, i.Value, value); err != nil {
-		log.Println("decode secure cookie:", err)
-		result, _ := json.Marshal(auth)
-		w.Write(result)
-		return
-	}
-	if value.MemberID == -1 {
-		result, _ := json.Marshal(auth)
-		w.Write(result)
-		return
-	}
-	result, _ := json.Marshal(value)
+	result, _ := json.Marshal(cookie)
 	w.Write(result)
 }
 
@@ -204,25 +171,14 @@ func doLoginHandler(w http.ResponseWriter, r *http.Request) {
 	redirect(w, "/")
 
 }
-
-func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	cookie := http.Cookie{Name: cookieName, Value: "", MaxAge: -1}
-	http.SetCookie(w, &cookie)
-	redirect(w, "/")
-	return
-}
-
 func showSignupHandler(w http.ResponseWriter, r *http.Request) {
-	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
 	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/signup.html"))
 	tmpl.ExecuteTemplate(w, "template", struct {
 		Title string
 	}{Title: "聊天室註冊"})
 }
-
 func doSignupHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
-
 	if err != nil {
 		log.Println("Error:", err)
 	}
@@ -233,14 +189,39 @@ func doSignupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	res := model.CheckSignup(form)
 	if res.Status.Code == 0 {
-		c1 := http.Cookie{Name: "memberID", Value: strconv.Itoa(res.Data.ID), MaxAge: 365 * 24 * 60 * 60}
-		c2 := http.Cookie{Name: "nickname", Value: res.Data.Nickname, MaxAge: 365 * 24 * 60 * 60}
-		http.SetCookie(w, &c1)
-		http.SetCookie(w, &c2)
+		setCookie(&w, r, &Cookies{MemberID: res.Data.ID, Nickname: res.Data.Nickname})
 	}
 	result, err := json.Marshal(res.Status)
 	w.Write(result)
 
+}
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	cookie := http.Cookie{Name: cookieName, Value: "", MaxAge: -1}
+	http.SetCookie(w, &cookie)
+	redirect(w, "/")
+	return
+}
+func chatRoomHandler(w http.ResponseWriter, r *http.Request) {
+	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
+	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/chat.html"))
+
+	vars := mux.Vars(r)
+	roomID, err := strconv.Atoi(vars["roomID"])
+	if err != nil {
+		log.Println("Error: ", err, " roomID is not number.")
+	}
+	cookie := getCookie(w, r)
+	if cookie != nil {
+		cookie.RoomID = roomID
+		setCookie(&w, r, cookie)
+	}
+	roomName := model.GetRoomName(roomID)
+
+	tmpl.ExecuteTemplate(w, "template", struct {
+		Title string
+	}{
+		Title: roomName,
+	})
 }
 
 // create room
@@ -254,25 +235,23 @@ func showCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func doCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
-	id, _ := r.Cookie("memberID")
-	i, err := strconv.Atoi(id.Value)
+	cookie := getCookie(w, r)
+
+	var form model.CreateRoomForm
+	err := r.ParseForm()
 	if err != nil {
 		log.Println("Error:", err)
 	}
-	var form model.CreateRoomForm
-	err = r.ParseForm()
-
 	err = schema.NewDecoder().Decode(&form, r.PostForm)
 	if err != nil {
 		log.Println("Error:", err)
 	}
-	form.MemberID = i
+	form.MemberID = cookie.MemberID
 	res := model.CheckCreate(form)
+	log.Println(res)
 	if res.Status.Code == 0 {
-		c := http.Cookie{Name: "roomID", Value: strconv.Itoa(res.Data.ID), MaxAge: 365 * 24 * 60 * 60}
-		http.SetCookie(w, &c)
+		setCookie(&w, r, &Cookies{RoomID: res.Data.ID, MemberID: cookie.MemberID, Nickname: cookie.Nickname})
 	}
-
 	result, err := json.Marshal(res)
 	if err != nil {
 		log.Println("Error: ", err)

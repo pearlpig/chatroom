@@ -8,30 +8,37 @@ $(function() {
     })
 
     $("#createRoomForm").submit(function(e) {
-
         e.preventDefault(); // avoid to execute the actual submit of the form.
-
         var form = $(this);
-
-        console.log(form)
         var url = form.attr('action');
+        let roomName
+        data = form.serializeArray()
+        data.forEach(item => {
+            if (item.name == "roomName") {
+                roomName = item.value
+            }
+        })
         $.ajax({
             type: "POST",
             url: url,
             data: form.serialize(), // serializes the form's elements.
             beforeSend: function() {
                 $("#createRoomNameErrMsg").hide()
+                if (checkRoomNameFmt(roomName) !== "ok") {
+                    $("#createRoomNameErrMsg").show()
+                    $("#createRoomNameErrMsg").text(checkRoomNameFmt(roomName))
+                    return false
+                }
             },
             success: function(data) {
                 console.log(data)
                 let result = JSON.parse(data);
                 console.log(result)
                 if (result.status.code == 0) {
-                    location.href = "/room/" + result.data.id
+                    location.href = "/"
                 } else if (result.status.code == 1) {
                     $("#createRoomNameErrMsg").show()
                     $("#createRoomNameErrMsg").text(result.status.msg)
-                        // $('span[name*="emailErrMsg"]').css({ visibility: "visible" });
                 } else {
                     alert("invalid status")
                 }
@@ -147,6 +154,14 @@ function addPageTd(name, page, text) {
     return td
 }
 
+function checkRoomNameFmt(roomName) {
+    if (roomName.length > 20) {
+        return "Room name length should at most 20 character!"
+    } else if (roomName.length < 1) {
+        return "Room name should not be empty!"
+    }
+    return "ok"
+}
 // function getFormData($form) {
 //     var unindexed_array = $form.serializeArray();
 //     var indexed_array = {};
