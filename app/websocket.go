@@ -29,6 +29,7 @@ type SocketConn struct {
 	Cookie *Cookies
 }
 
+var i = 0
 var connList = make(map[int]map[int]*SocketConn)
 var number = make(chan int)
 var cMsg = make(chan Message)
@@ -43,13 +44,13 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ticket := <-number
-	socket := make(map[int]*SocketConn)
-	socket[ticket] = &SocketConn{Conn: conn, Cookie: cookie}
 	log.Println("門票號碼：", ticket)
-	connList[roomID] = socket
+	connList[roomID] = make(map[int]*SocketConn)
+	connList[roomID][ticket] = &SocketConn{Conn: conn, Cookie: cookie}
 	defer func(ticket int, conn *websocket.Conn) {
 		log.Println("disconnect !!")
 		conn.Close()
+		conn = nil
 		delete(connList[roomID], ticket)
 	}(ticket, conn)
 	cMsg <- Message{RoomID: roomID, Nickname: nickname, Status: 1}
@@ -67,7 +68,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	cMsg <- Message{Nickname: nickname, Status: 0}
 }
 func connRoomHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("connnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn")
+	log.Println("connect room handler")
 	cookie := getCookie(w, r)
 	vars := mux.Vars(r)
 	roomID, err := strconv.Atoi(vars["roomID"])
@@ -79,13 +80,12 @@ func connRoomHandler(w http.ResponseWriter, r *http.Request) {
 	setCookie(&w, r, cookie)
 }
 func disconnRoomHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("coddddddddnn")
+	log.Println("disconnect room handler")
 	cookie := getCookie(w, r)
 	cookie.RoomID = -1
 	setCookie(&w, r, cookie)
 }
 func dispensor() {
-	i := 0
 	for {
 		number <- i
 		i++
@@ -94,14 +94,15 @@ func dispensor() {
 func broker() {
 	for {
 		msg := <-cMsg
-		for _, conn := range connList[msg.RoomID] {
+		log.Println(msg.RoomID)
+		for i, conn := range connList[msg.RoomID] {
 			if conn != nil {
-				log.Println("send")
+				log.Println("send", i)
 				if err := conn.Conn.WriteJSON(msg); err != nil {
 					fmt.Println("write err: ", err)
 				}
 			} else {
-				log.Println("disconnected")
+				log.Println("disconnected.................")
 			}
 		}
 	}

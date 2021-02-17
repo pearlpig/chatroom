@@ -61,6 +61,7 @@ $(function() {
         var socket = new WebSocket("ws://localhost:8080/room/" + roomID + "/echo")
         socket.onopen = function() {
             alert("socket is connected1")
+            console.log("connected")
             $.ajax({
                 url: "/room/" + roomID + "/connRoom",
                 succsess: function() {
