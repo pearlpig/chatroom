@@ -52,6 +52,16 @@ $(function() {
                 $('#quit').click(function() {
                     location.href = "/"
                 })
+                window.onbeforeunload = function(e) {　　
+                    $.ajax({
+                        url: "/room/" + roomID + "/disconnRoom",
+                        succsess: function(data) {
+                            console.log(data)
+                            console.log("disconnected set cookie success!")
+                            alert("socket is disconnected")
+                        }
+                    })
+                }
             }
         }
     });
@@ -62,17 +72,7 @@ $(function() {
         socket.onopen = function() {
             console.log("socket is onopen")
             $.ajax({
-                method: "GET",
                 url: "/room/" + roomID + "/connRoom",
-                before: function() {
-                    alert("socket is connected")
-                },
-                succsess: function(data) {
-                    console.log(data)
-                    console.log("connectedRoom set cookie success!")
-                    alert("socket is connected")
-                }
-
             })
         };
         socket.onmessage = function(e) {
@@ -98,16 +98,6 @@ $(function() {
             }
         }
         socket.onclose = function() {
-            console.log("socket is close")
-            $.ajax({
-                url: "/room/" + roomID + "/disconnRoom",
-                succsess: function(data) {
-                    console.log(data)
-                    console.log("disconnected set cookie success!")
-                    alert("socket is disconnected")
-                }
-            })
-
             // addMsg("Socket is close", "System")
         }
         return socket

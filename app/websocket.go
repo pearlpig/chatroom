@@ -1,7 +1,6 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -97,12 +96,6 @@ func disconnRoomHandler(w http.ResponseWriter, r *http.Request) {
 	cookie := getCookie(w, r)
 	cookie.RoomID = -1
 	setCookie(&w, r, cookie)
-	result, err := json.Marshal(cookie)
-	if err != nil {
-		log.Println("Error: ", err)
-	}
-	w.Write(result)
-
 }
 func dispensor() {
 	for {
