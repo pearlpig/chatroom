@@ -1,0 +1,25 @@
+{{ block "body" . }}
+
+<link href="public/css/login.css" rel="stylesheet">
+<main class="form-login text-center">
+    <form>
+        <img class="mb-4" src="/public/chat.ico" width="57" height="57">
+        <h1 class="h3 mb-3 fw-normal">Please Login in</h1>
+        <label for="inputEmail" class="sr-only">Email address</label>
+        <input type="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" id="inputPassword" class="form-control" placeholder="Password" required>
+
+        <div class="checkbox mb">
+            <label>
+        <input type="checkbox" value="remember-me"> Remember me
+      </label>
+        </div>
+        <div id="errBox" class="checkbox mb-3">
+            <!-- <span id="errMsg" style="color:red; font-size: medium; ">123</span> -->
+        </div>
+        <button class="w-100 btn btn-lg btn-primary" type="submit">Login in</button>
+        <p class="mt-5 mb-3 text-muted">&copy; 2020-2021</p>
+    </form>
+</main>
+{{end}}

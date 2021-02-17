@@ -41,10 +41,9 @@ func Server() {
 	secureC = securecookie.New([]byte(hashKey), []byte(blockKey))
 
 	r := mux.NewRouter()
-	fs := http.FileServer(http.Dir("./public"))
+	fs := http.FileServer(http.Dir("."))
 
-	r.PathPrefix("/js/").Handler(fs)
-	r.PathPrefix("/css/").Handler(fs)
+	r.PathPrefix("/public").Handler(fs)
 
 	r.HandleFunc("/", indexHandler).Methods("GET")
 	r.HandleFunc("/", getRoomListHandler).Methods("POST")
@@ -145,7 +144,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 func showLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
-	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/login.html"))
+	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/login2.html"))
 
 	tmpl.ExecuteTemplate(w, "template", struct {
 		Title string

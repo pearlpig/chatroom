@@ -47,7 +47,6 @@ $(function() {
                     if (text != undefined && text !== "") {
                         ws.send(text)
                     }
-                    // ws.send(JSON.stringify({ msg: $('#chatInput').val() }))
                 })
                 $('#quit').click(function() {
                     location.href = "/"
