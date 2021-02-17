@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -17,10 +18,10 @@ import (
 
 // Message ...
 type Message struct {
-	Nickname string `json:"nickname,omitempty"`
-	Msg      string `json:"msg,omitempty"`
-	RoomID   int    `json:"room_id,omitempty"`
-	Status   int    `json:"status"`
+	Nickname []string `json:"nickname,omitempty"`
+	Msg      string   `json:"msg,omitempty"`
+	RoomID   int      `json:"room_id,omitempty"`
+	Status   int      `json:"status"`
 }
 
 // SocketConn ...
@@ -45,7 +46,9 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 	ticket := <-number
 	log.Println("門票號碼：", ticket)
-	connList[roomID] = make(map[int]*SocketConn)
+	if connList[roomID] == nil {
+		connList[roomID] = make(map[int]*SocketConn)
+	}
 	connList[roomID][ticket] = &SocketConn{Conn: conn, Cookie: cookie}
 	defer func(ticket int, conn *websocket.Conn) {
 		log.Println("disconnect !!")
@@ -53,20 +56,25 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		conn = nil
 		delete(connList[roomID], ticket)
 	}(ticket, conn)
-	cMsg <- Message{RoomID: roomID, Nickname: nickname, Status: 1}
+	cMsg <- Message{RoomID: roomID, Nickname: []string{nickname}, Status: 1}
 	for {
 		log.Println("listening socket")
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Println("Error reading message: ", err)
-			fmt.Println(msg)
+			log.Println("Error reading message: ", err)
 			break
 		}
-		fmt.Printf("Got message: %s\n", msg)
-		cMsg <- Message{RoomID: roomID, Msg: string(msg), Nickname: nickname, Status: 2}
+		log.Printf("Got message: %s\n", msg)
+		cMsg <- Message{RoomID: roomID, Msg: string(msg), Nickname: []string{nickname}, Status: 0}
 	}
-	cMsg <- Message{Nickname: nickname, Status: 0}
+	log.Println("send close msg")
+	cMsg <- Message{RoomID: roomID, Nickname: []string{nickname}, Status: 2}
 }
+
+type List struct {
+	Member []string
+}
+
 func connRoomHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("connect room handler")
 	cookie := getCookie(w, r)
@@ -78,12 +86,23 @@ func connRoomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cookie.RoomID = roomID
 	setCookie(&w, r, cookie)
+	msg := Message{RoomID: roomID, Status: 3}
+	for _, member := range connList[roomID] {
+		msg.Nickname = append(msg.Nickname, member.Cookie.Nickname)
+	}
+	cMsg <- msg
 }
 func disconnRoomHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("disconnect room handler")
 	cookie := getCookie(w, r)
 	cookie.RoomID = -1
 	setCookie(&w, r, cookie)
+	result, err := json.Marshal(cookie)
+	if err != nil {
+		log.Println("Error: ", err)
+	}
+	w.Write(result)
+
 }
 func dispensor() {
 	for {
@@ -94,10 +113,12 @@ func dispensor() {
 func broker() {
 	for {
 		msg := <-cMsg
-		log.Println(msg.RoomID)
+
+		log.Println(msg)
 		for i, conn := range connList[msg.RoomID] {
 			if conn != nil {
 				log.Println("send", i)
+				log.Println(connList)
 				if err := conn.Conn.WriteJSON(msg); err != nil {
 					fmt.Println("write err: ", err)
 				}

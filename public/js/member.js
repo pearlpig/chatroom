@@ -60,41 +60,49 @@ $(function() {
         // var socket = new WebSocket("ws://localhost:8080/room/{[0~9]+}/echo")
         var socket = new WebSocket("ws://localhost:8080/room/" + roomID + "/echo")
         socket.onopen = function() {
-            alert("socket is connected1")
-            console.log("connected")
+            console.log("socket is onopen")
             $.ajax({
+                method: "GET",
                 url: "/room/" + roomID + "/connRoom",
-                succsess: function() {
+                before: function() {
+                    alert("socket is connected")
+                },
+                succsess: function(data) {
+                    console.log(data)
                     console.log("connectedRoom set cookie success!")
                     alert("socket is connected")
                 }
+
             })
         };
         socket.onmessage = function(e) {
-
             m = JSON.parse(e.data)
             console.log(m)
             if (m.status == 0) {
-                console.log(m.status)
-                removeMember2List(m.nickname)
-
-                addMsg("System: " + m.nickname + " is disconnected!")
+                if (m.msg !== undefined) {
+                    console.log("sending msg")
+                    addMsg(m.nickname[0] + ": " + m.msg)
+                }
             } else if (m.status == 1) {
                 console.log(m.status)
-                addMember2List(m.nickname)
-                addMsg("System: " + m.nickname + " is connected!")
-            } else {
-                if (m.msg !== undefined) {
-                    addMsg(m.nickname + ": " + m.msg)
-                }
+                addMsg("System: " + m.nickname[0] + " is connected!")
+            } else if (m.status == 2) {
+                console.log(m.status)
+                removeMember2List(m.nickname)
+                addMsg("System: " + m.nickname[0] + " is disconnected!")
+            } else if (m.status == 3) {
+                removeAllMember2List()
+                m.nickname.forEach(name => {
+                    addMember2List(name)
+                })
             }
         }
         socket.onclose = function() {
-            console.log("socket is disconnected")
-            alert("socket is disconnected1")
+            console.log("socket is close")
             $.ajax({
                 url: "/room/" + roomID + "/disconnRoom",
-                succsess: function() {
+                succsess: function(data) {
+                    console.log(data)
                     console.log("disconnected set cookie success!")
                     alert("socket is disconnected")
                 }
@@ -111,6 +119,10 @@ $(function() {
 
     function removeMember2List(n) {
         $('li[name="' + n + '"]').remove()
+    }
+
+    function removeAllMember2List() {
+        $('.roomMemberList').children().remove()
     }
 
     function addMsg(m) {

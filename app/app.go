@@ -98,6 +98,9 @@ func chatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error: ", err, " roomID is not number.")
 	}
+	cookie := getCookie(w, r)
+	cookie.RoomID = roomID
+	setCookie(&w, r, cookie)
 	roomName := model.GetRoomName(roomID)
 
 	tmpl.ExecuteTemplate(w, "template", struct {

@@ -38,9 +38,7 @@ $(function() {
             }
         });
 
-
     });
-
 
     $('a[class*="pageBtn"]').click(function() {
         let page = parseInt(this.name)
@@ -93,7 +91,7 @@ function show(page) {
         beforeSend: function() {
             $('#chatroomList').empty()
         },
-        success: function(data, status) {
+        success: function(data) {
             let roomList = JSON.parse(data);
             roomList.forEach(room => {
                 showRoom(room.id, room.title, room.nickname)
