@@ -7,40 +7,61 @@
     <meta charset="utf-8">
     <title>{{ .Title }}</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/form.css" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <script src="js/jquery-3.5.1.min.js"></script>
     <script src="js/signup.js"></script>
     <link rel="shortcut icon" href="#">
 </head>
 
-<body>
-    <div style="border: 1px solid #cccccc; padding:2em">
-        <form action="/signup" id="signupForm">
-            <table>
-                <tr>
-                    <td style="text-align:right">e-mail</td>
-                    <td><input name="email" type="email" placeholder="請輸入您的 E-Mail 信箱"><span id="signupEmailErrMsg" style="padding-left:1em; color:red; font-size: small;"></span></td>
-                </tr>
-                <tr>
-                    <td style="text-align:right">暱稱</td>
-                    <td>
-                        <input name="nickname" type="text" placeholder="請取一個暱稱 "><span id="signupNicknameErrMsg" style="padding-left:1em; color:red; font-size: small; "></span></td>
-                </tr>
-                <tr>
-                    <td style="text-align:right ">密碼</td>
-                    <td><input name="pwd1" type="password" placeholder="請輸入密碼 "><span id="passwordErrMsg" style="padding-left:1em; color:red; font-size: small; "></span></td>
-                </tr>
-                <tr>
-                    <td style="text-align:right ">確認密碼</td>
-                    <td><input name="pwd2" type="password" placeholder="請重新輸入一次密碼 "><span id="confirmdPasswordErrMsg" style="padding-left:1em; color:red; font-size: small; "></span></td>
-                </tr>
-                <tr>
-                    <td colspan="2 " style="text-align: right; "><button>註冊</button></td>
-                </tr>
-            </table>
+<body class="text-center">
+    <main class="form">
+        <form id="signupForm">
+            <a href="/"><img class="mb-4" src="images/chat.ico" width="70" height="70"></a>
+            <h1 class="h2 mb-4 fw-normal">Please Sign up</h1>
+            <label for="email" class="sr-only">Email address</label>
+            <input type="email" name="email" class="form-control form-input" placeholder="Email address" required autofocus>
+            <label for="nickname" class="sr-only">Nickname</label>
+            <input type="text" name="nickname" class="form-control form-input" placeholder="Nickname" required>
+            <label for="pwd1" class="sr-only">Password</label>
+            <input type="password" name="pwd1" class="form-control form-input" placeholder="Password" required>
+            <label for="pwd2" class="sr-only">Confirmed Password</label>
+            <input type="password" name="pwd2" class="form-control form-input-bottom" placeholder="Confirmed Password" required>
+
+            <div id="errBox" class="checkbox mb-4">
+                <!-- <span id="errMsg" style="color:red; font-size: medium; ">123</span> -->
+            </div>
+            <button class="w-100 btn btn-lg btn-primary" type="submit">Sign up</button>
+            <p class="mt-5 mb-3 text-muted">&copy; 2020-2021</p>
         </form>
-    </div>
+    </main>
 </body>
 
 </html>
 {{ end }}
+<!-- <div style="border: 1px solid #cccccc; padding:2em">
+    <form action="/signup" id="signupForm">
+        <table>
+            <tr>
+                <td style="text-align:right">e-mail</td>
+                <td><input name="email" type="email" placeholder="請輸入您的 E-Mail 信箱"><span id="signupEmailErrMsg" style="padding-left:1em; color:red; font-size: small;"></span></td>
+            </tr>
+            <tr>
+                <td style="text-align:right">暱稱</td>
+                <td>
+                    <input name="nickname" type="text" placeholder="請取一個暱稱 "><span id="signupNicknameErrMsg" style="padding-left:1em; color:red; font-size: small; "></span></td>
+            </tr>
+            <tr>
+                <td style="text-align:right ">密碼</td>
+                <td><input name="pwd1" type="password" placeholder="請輸入密碼 "><span id="passwordErrMsg" style="padding-left:1em; color:red; font-size: small; "></span></td>
+            </tr>
+            <tr>
+                <td style="text-align:right ">確認密碼</td>
+                <td><input name="pwd2" type="password" placeholder="請重新輸入一次密碼 "><span id="confirmdPasswordErrMsg" style="padding-left:1em; color:red; font-size: small; "></span></td>
+            </tr>
+            <tr>
+                <td colspan="2 " style="text-align: right; "><button>註冊</button></td>
+            </tr>
+        </table>
+    </form>
+</div> -->

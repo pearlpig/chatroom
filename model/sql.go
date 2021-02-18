@@ -2,23 +2,9 @@ package model
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 )
-
-func insert() {
-	db, err := Connect()
-	if err != nil {
-		log.Fatal(err)
-	}
-	insert, err := db.Exec("insert  into member (id,email,password,nickname,created,updated) VALUES(?,?,?,?,now(),now())", nil, "123@123", "asd", "hi")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(insert)
-}
 
 // Connect ...
 func Connect() (*sql.DB, error) {
@@ -29,6 +15,7 @@ func Connect() (*sql.DB, error) {
 	return db, nil
 }
 
+// InitDB ...
 func InitDB() {
 	createDB()
 	createMenberTable()

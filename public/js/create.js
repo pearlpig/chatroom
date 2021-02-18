@@ -21,10 +21,8 @@ $(function() {
             url: url,
             data: form.serialize(), // serializes the form's elements.
             beforeSend: function() {
-                $("#createRoomNameErrMsg").hide()
                 if (checkRoomNameFmt(formData.roomName) !== "ok") {
-                    $("#createRoomNameErrMsg").show()
-                    $("#createRoomNameErrMsg").text(checkRoomNameFmt(formData.roomName))
+                    errMsg(checkRoomNameFmt(formData.roomName))
                     return false
                 }
             },
@@ -47,8 +45,9 @@ $(function() {
 })
 
 function checkRoomNameFmt(roomName) {
+
     if (roomName.length > 20) {
-        return "Room name length should at most 20 character!"
+        return "Room name length should at most 20 character."
     } else if (roomName.length < 1) {
         return "Room name should not be empty!"
     }

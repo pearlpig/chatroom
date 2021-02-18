@@ -1,6 +1,8 @@
 package model
 
 import (
+	"crypto/sha512"
+	"fmt"
 	"log"
 	"strings"
 )
@@ -61,14 +63,14 @@ type ResMember struct {
 
 // CheckLogin ...
 func CheckLogin(form LoginForm) *ResMember {
-
-	if checkEmailExist(form.Email) {
+	if len([]rune(form.Pwd)) < 8 {
+		return &ResMember{Status: &ErrStatus{Code: 3, Msg: "Password length should at least 8."}, Data: nil}
+	} else if checkEmailExist(form.Email) {
 		if r, n := checkPwdCorrect(form.Email, form.Pwd); r {
 			return &ResMember{Status: &ErrStatus{Code: 0, Msg: "Login"}, Data: n}
 		}
 		return &ResMember{Status: &ErrStatus{Code: 2, Msg: "Password is not correct!"}, Data: nil}
 	}
-
 	return &ResMember{Status: &ErrStatus{Code: 1, Msg: "Email is not exist, please sign up!"}, Data: nil}
 }
 
@@ -92,8 +94,8 @@ func doSignup(form *SignupForm) int {
 		log.Println("connect: ", err)
 	}
 	defer db.Close()
-
-	res, err := db.Exec("insert into member(ID, email, password, nickname) values(?, ?, ?, ?)", nil, form.Email, form.Pwd1, form.Nickname)
+	pwd := fmt.Sprintf("%x", sha512.Sum512([]byte(form.Pwd1)))
+	res, err := db.Exec("insert into member(ID, email, password, nickname) values(?, ?, ?, ?)", nil, form.Email, pwd, form.Nickname)
 	if err != nil {
 		log.Println("insert: ", err)
 	}
@@ -103,35 +105,6 @@ func doSignup(form *SignupForm) int {
 	}
 	return int(id)
 
-}
-
-// CheckCreate ...
-func CheckCreate(form CreateRoomForm) *ResCreateRoom {
-	log.Println(form)
-	// log.Println(checkEmailExist(form.Email))
-	if checkRoomExist(form.RoomName) {
-		return &ResCreateRoom{Status: &ErrStatus{Code: 1, Msg: "Room is exist, please try another one."}, Data: nil}
-	}
-	roomID := doCreateRoom(&form)
-	return &ResCreateRoom{Status: &ErrStatus{Code: 0, Msg: "Create room!"}, Data: &Room{ID: roomID, Title: form.RoomName, MemberID: form.MemberID, Nickname: ""}}
-}
-
-func doCreateRoom(form *CreateRoomForm) int {
-	db, err := Connect()
-	if err != nil {
-		log.Println("connect: ", err)
-	}
-	defer db.Close()
-
-	res, err := db.Exec("insert into chatroom(ID, title, member_id) values(?, ?, ?)", nil, form.RoomName, form.MemberID)
-	if err != nil {
-		log.Println("insert: ", err)
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		log.Println("Error: ", err)
-	}
-	return int(id)
 }
 func checkPwdCorrect(email string, pwd string) (bool, *Member) {
 	db, err := Connect()
@@ -149,9 +122,13 @@ func checkPwdCorrect(email string, pwd string) (bool, *Member) {
 		rows.Scan(&dbMember.ID, &dbMember.Email, &dbMember.Pwd, &dbMember.Nickname)
 	}
 	log.Println(dbMember)
-	if strings.Compare(pwd, dbMember.Pwd) == 0 {
+	log.Println(dbMember.Pwd)
+	log.Println(fmt.Sprintf("%x", sha512.Sum512([]byte(pwd))))
+	if strings.Compare(fmt.Sprintf("%x", sha512.Sum512([]byte(pwd))), dbMember.Pwd) == 0 {
+		log.Println("yessss")
 		return true, dbMember
 	}
+	log.Println("nooooo")
 	return false, nil
 }
 
@@ -204,6 +181,39 @@ func checkNicknameExist(nickname string) bool {
 		log.Println("This nickname is not unique in db!")
 		return true
 	}
+}
+
+// CheckCreate ...
+func CheckCreate(form CreateRoomForm) *ResCreateRoom {
+	log.Println(form)
+	// log.Println(checkEmailExist(form.Email))
+	if len([]rune(form.RoomName)) > 20 {
+		return &ResCreateRoom{Status: &ErrStatus{Code: 3, Msg: "Room name length should at most 20 character."}, Data: nil}
+	} else if len([]rune(form.RoomName)) < 0 {
+		return &ResCreateRoom{Status: &ErrStatus{Code: 2, Msg: "Room name should not be empty!"}, Data: nil}
+	} else if checkRoomExist(form.RoomName) {
+		return &ResCreateRoom{Status: &ErrStatus{Code: 1, Msg: "Room is exist, please try another one."}, Data: nil}
+	}
+	roomID := doCreateRoom(&form)
+	return &ResCreateRoom{Status: &ErrStatus{Code: 0, Msg: "Create room!"}, Data: &Room{ID: roomID, Title: form.RoomName, MemberID: form.MemberID, Nickname: ""}}
+}
+
+func doCreateRoom(form *CreateRoomForm) int {
+	db, err := Connect()
+	if err != nil {
+		log.Println("connect: ", err)
+	}
+	defer db.Close()
+
+	res, err := db.Exec("insert into chatroom(ID, title, member_id) values(?, ?, ?)", nil, form.RoomName, form.MemberID)
+	if err != nil {
+		log.Println("insert: ", err)
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		log.Println("Error: ", err)
+	}
+	return int(id)
 }
 
 func checkRoomExist(roomName string) bool {

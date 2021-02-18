@@ -42,9 +42,9 @@ func Server() {
 
 	r := mux.NewRouter()
 	fs := http.FileServer(http.Dir("./public"))
-	r.PathPrefix("/css").Handler(fs)
-	r.PathPrefix("/js").Handler(fs)
-	r.PathPrefix("/images").Handler(fs)
+	r.PathPrefix("/css/").Handler(fs)
+	r.PathPrefix("/js/").Handler(fs)
+	r.PathPrefix("/images/").Handler(fs)
 
 	r.HandleFunc("/", indexHandler).Methods("GET")
 	r.HandleFunc("/", getRoomListHandler).Methods("POST")
@@ -68,7 +68,7 @@ func Server() {
 	s.HandleFunc("/connRoom", connRoomHandler)
 	s.HandleFunc("/disconnRoom", disconnRoomHandler)
 
-	s.HandleFunc("/check", memberAuthHandler)
+	r.HandleFunc("/check", memberAuthHandler)
 
 	/* Create the logger for the web application. */
 	l := log.New()
@@ -194,7 +194,7 @@ func doSignupHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	cookie := http.Cookie{Name: cookieName, Value: "", MaxAge: -1}
+	cookie := http.Cookie{Name: cookieName, MaxAge: -1}
 	http.SetCookie(w, &cookie)
 	redirect(w, "/")
 	return

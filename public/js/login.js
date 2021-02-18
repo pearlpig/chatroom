@@ -35,8 +35,8 @@ function checkEmailFmt(email) {
 }
 
 function checkPwdFmt(pwd) {
-    if (pwd.length < 8 || pwd.length > 128) {
-        return "Password length should between 8 to 128!"
+    if (pwd.length < 8) {
+        return "Password length should at least 8."
     }
     return "ok"
 }
