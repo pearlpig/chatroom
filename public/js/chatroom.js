@@ -1,174 +1,98 @@
 $(function() {
-    addPage()
-    show(1)
-
-    $("#createroomPage").click(function() {
-        console.log("create")
-        location.href = "/create"
+    $.ajax({
+        type: "GET",
+        url: "/check",
+        success: function(data) {
+            result = JSON.parse(data)
+            console.log(result)
+            if (result.member_id == -1) {
+                location.href = "/login"
+            }
+        }
+    });
+    // check member
+    if (window.WebSocket == undefined) {
+        alert("THe browser doesn't support wrbsocket!")
+    } else {
+        // title = (document.title)
+        roomID = parseInt(document.location.pathname.replace(/\/room\//, ""))
+        console.log(roomID)
+        ws = initWS(roomID)
+    }
+    $('#sendBtn').click(function() {
+        console.log("click")
+        text = $('#chatInput').val()
+        console.log(text)
+        if (text != undefined && text !== "") {
+            ws.send(text)
+        }
     })
-
-    $("#createRoomForm").submit(function(e) {
-        e.preventDefault(); // avoid to execute the actual submit of the form.
-        var form = $(this);
-        var url = form.attr('action');
-        let roomName
-        data = form.serializeArray()
-        data.forEach(item => {
-            if (item.name == "roomName") {
-                roomName = item.value
+    $('#quit').click(function() {
+        location.href = "/"
+    })
+    window.onbeforeunload = function(e) {　　
+        $.ajax({
+            url: "/room/" + roomID + "/disconnRoom",
+            succsess: function(data) {
+                console.log(data)
+                console.log("disconnected set cookie success!")
+                alert("socket is disconnected")
             }
         })
-        $.ajax({
-            type: "POST",
-            url: url,
-            data: form.serialize(), // serializes the form's elements.
-            beforeSend: function() {
-                $("#createRoomNameErrMsg").hide()
-                if (checkRoomNameFmt(roomName) !== "ok") {
-                    $("#createRoomNameErrMsg").show()
-                    $("#createRoomNameErrMsg").text(checkRoomNameFmt(roomName))
-                    return false
-                }
-            },
-            success: function(data) {
-                console.log(data)
-                let result = JSON.parse(data);
-                console.log(result)
-                if (result.status.code == 0) {
-                    location.href = "/"
-                } else if (result.status.code == 1) {
-                    $("#createRoomNameErrMsg").show()
-                    $("#createRoomNameErrMsg").text(result.status.msg)
-                } else {
-                    alert("invalid status")
-                }
-            }
-        });
-
-    });
-
-    $('a[class*="pageBtn"]').click(function() {
-        let page = parseInt(this.name)
-        show(page)
-
-    })
-    $('a[class*="first"]').click(function() {
-
-        show(1)
-    })
-    $('a[class="last"]').click(function() {
-        show(10)
-    })
-    $('a[class="prev"]').click(function() {
-        // var nowPage = $('a[class*="prev"]').parent().next()
-        let nowPage
-        for (nowPage = $('a[class*="prev"]').parent().next(); nowPage.attr('style'); nowPage = nowPage.next()) {
-
-        }
-        nowPage = parseInt(nowPage.attr('name'))
-        if (nowPage == 1) {
-            show(1)
-
-        } else {
-            show(nowPage - 1)
-        }
-    })
-    $('a[class*="next"]').click(function() {
-        let nowPage
-        for (nowPage = $('a[class*="prev"]').parent().next(); nowPage.attr('style'); nowPage = nowPage.next()) {
-
-        }
-        nowPage = parseInt(nowPage.attr('name'))
-        if (nowPage == 10) {
-            show(10)
-
-        } else {
-            show(nowPage + 1)
-        }
-    })
-
+    }
 })
 
-function show(page) {
-    let wanted = { "page": page }
-    $.ajax({
-        method: "POST",
-        url: "/",
-        data: wanted,
-        beforeSend: function() {
-            $('#chatroomList').empty()
-        },
-        success: function(data) {
-            let roomList = JSON.parse(data);
-            roomList.forEach(room => {
-                showRoom(room.id, room.title, room.nickname)
+function initWS(roomID) {
+    // var socket = new WebSocket("ws://localhost:8080/room/{[0~9]+}/echo")
+    var socket = new WebSocket("ws://localhost:8080/room/" + roomID + "/echo")
+    socket.onopen = function() {
+        console.log("socket is onopen")
+        $.ajax({
+            url: "/room/" + roomID + "/connRoom",
+        })
+    };
+    socket.onmessage = function(e) {
+        m = JSON.parse(e.data)
+        console.log(m)
+        if (m.status == 0) {
+            if (m.msg !== undefined) {
+                console.log("sending msg")
+                addMsg(m.nickname[0] + ": " + m.msg)
+            }
+        } else if (m.status == 1) {
+            console.log(m.status)
+            addMsg("System: " + m.nickname[0] + " is connected!")
+        } else if (m.status == 2) {
+            console.log(m.status)
+            removeMember2List(m.nickname)
+            addMsg("System: " + m.nickname[0] + " is disconnected!")
+        } else if (m.status == 3) {
+            removeAllMember2List()
+            m.nickname.forEach(name => {
+                addMember2List(name)
             })
-            showPage(page)
         }
-    })
-}
-
-
-function showRoom(id, title, nickname) {
-    var td1 = $('<td>').attr("class", "roomName")
-    var a1 = $('<a>').attr('href', '/room/' + id).attr("class", "roomBtn").attr('name', id).text(title)
-    var td2 = $('<td>').text(nickname);
-    var td3 = $('<td>').attr("class", "roomEntry")
-    var a2 = $('<a>').attr('href', '/room/' + id).attr("class", "roomBtn").attr('name', id).text('進入')
-    td1.append(a1)
-    td3.append(a2)
-    var tr = $('<tr>').attr("class", "room").append(td1, td2, td3);
-    $('#chatroomList').append(tr);
-}
-
-function showPage(page) {
-    $('td[class="page"]').hide()
-    let totalPage = 100
-    for (i = page; i <= page + 4 && page + 4 <= totalPage; i++) {
-        $('td[class*="page"]' + '[name="' + i + '"]').show()
     }
-}
-
-function addPage() {
-    page = 10
-    let tr = $('tr[name*="pageList"]')
-    tr.append(addPageTd("first", null, "第一頁"))
-    tr.append(addPageTd("prev", null, "前一頁"))
-    for (i = 1; i < page + 1; i++) {
-        tr.append(addPageTd(null, i, null))
+    socket.onclose = function() {
+        // addMsg("Socket is close", "System")
     }
-    tr.append(addPageTd("next", null, "下一頁"))
-    tr.append(addPageTd("last", null, "最後一頁"))
+    return socket
 }
 
-function addPageTd(name, page, text) {
-    if (page == null) {
-        var td = $('<td>')
-        var a = $('<a>').attr('class', name).attr("href", "#").text(text)
-
-    } else {
-        var td = $('<td>').attr('class', 'page').attr('name', page)
-        var a = $('<a>').attr("class", "pageBtn").attr("name", page).attr('href', '#').text(page)
-    }
-    td.append(a)
-    return td
+function addMember2List(n) {
+    $('.roomMemberList').append($('<li>').attr('class', 'listMember').attr('name', n).text(n))
 }
 
-function checkRoomNameFmt(roomName) {
-    if (roomName.length > 20) {
-        return "Room name length should at most 20 character!"
-    } else if (roomName.length < 1) {
-        return "Room name should not be empty!"
-    }
-    return "ok"
+function removeMember2List(n) {
+    $('li[name="' + n + '"]').remove()
 }
-// function getFormData($form) {
-//     var unindexed_array = $form.serializeArray();
-//     var indexed_array = {};
 
-//     $.map(unindexed_array, function(n, i) {
-//         indexed_array[n['name']] = n['value'];
-//     });
+function removeAllMember2List() {
+    $('.roomMemberList').children().remove()
+}
 
-//     return indexed_array;
-// }
+function addMsg(m) {
+    console.log("add")
+    let ul = $('#chatContent')
+    ul.append($('<li>').text(m))
+}

@@ -1,28 +1,42 @@
-{{ block "body" . }}
-<div style="border: 1px solid #cccccc; padding:2em">
-    <form action="/login" id="loginForm">
-        <table>
-            <tr>
-                <td style="text-align:right">e-mail</td>
-                <td>
-                    <input type="email" name="email" placeholder="請輸入您的 E-Mail 信箱">
-                    <span id="loginEmailErrMsg" style=" padding-left:1em; color:red; font-size: small; "></span>
-                </td>
-            </tr>
-            <tr>
-                <td style="text-align:right ">密碼</td>
-                <td>
-                    <input type="password" name="pwd" placeholder="請輸入密碼 ">
-                    <span id="loginPasswordErrMsg" style="padding-left:1em; color:red; font-size: small; "></span>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2" style="text-align: right; ">
-                    <button>登入</button>
-                </td>
-            </tr>
-        </table>
-    </form>
-</div>
+{{ define "login" }}
 
-{{ end }}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>{{ .Title }}</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/login.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/login.js"></script>
+    <link rel="shortcut icon" href="#">
+</head>
+
+<body>
+    <main class="form-login text-center">
+        <form id="loginForm">
+            <img class="mb-4" src="images/chat.ico" width="57" height="57">
+            <h1 class="h3 mb-3 fw-normal">Please Login in</h1>
+            <label for="email" class="sr-only">Email address</label>
+            <input type="email" name="email" class="form-control" placeholder="Email address" required autofocus>
+            <label for="pwd" class="sr-only">Password</label>
+            <input type="password" name="pwd" class="form-control" placeholder="Password" required>
+
+            <div class="checkbox mb">
+                <label>
+            <input type="checkbox" value="remember-me"> Remember me
+          </label>
+            </div>
+            <div id="errBox" class="checkbox mb-3">
+                <!-- <span id="errMsg" style="color:red; font-size: medium; ">123</span> -->
+            </div>
+            <button class="w-100 btn btn-lg btn-primary" type="submit">Login in</button>
+            <p class="mt-5 mb-3 text-muted">&copy; 2020-2021</p>
+        </form>
+    </main>
+</body>
+
+</html>
+{{end}}

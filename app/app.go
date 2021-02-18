@@ -41,9 +41,10 @@ func Server() {
 	secureC = securecookie.New([]byte(hashKey), []byte(blockKey))
 
 	r := mux.NewRouter()
-	fs := http.FileServer(http.Dir("."))
-
-	r.PathPrefix("/public").Handler(fs)
+	fs := http.FileServer(http.Dir("./public"))
+	r.PathPrefix("/css").Handler(fs)
+	r.PathPrefix("/js").Handler(fs)
+	r.PathPrefix("/images").Handler(fs)
 
 	r.HandleFunc("/", indexHandler).Methods("GET")
 	r.HandleFunc("/", getRoomListHandler).Methods("POST")
@@ -67,8 +68,7 @@ func Server() {
 	s.HandleFunc("/connRoom", connRoomHandler)
 	s.HandleFunc("/disconnRoom", disconnRoomHandler)
 
-	//
-	r.HandleFunc("/check", memberAuthHandler)
+	s.HandleFunc("/check", memberAuthHandler)
 
 	/* Create the logger for the web application. */
 	l := log.New()
@@ -133,9 +133,9 @@ func setCookie(w *http.ResponseWriter, r *http.Request, cookie *Cookies) {
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
-	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/index.html"))
+	var tmpl = template.Must(template.ParseFiles("views/index.html"))
 
-	tmpl.ExecuteTemplate(w, "template", struct {
+	tmpl.ExecuteTemplate(w, "index", struct {
 		Title string
 	}{
 		"首頁",
@@ -144,9 +144,9 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 func showLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
-	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/login2.html"))
+	var tmpl = template.Must(template.ParseFiles("views/login.html"))
 
-	tmpl.ExecuteTemplate(w, "template", struct {
+	tmpl.ExecuteTemplate(w, "login", struct {
 		Title string
 	}{Title: "聊天室登入"})
 }
@@ -164,15 +164,14 @@ func doLoginHandler(w http.ResponseWriter, r *http.Request) {
 	if res.Status.Code == 0 {
 		setCookie(&w, r, &Cookies{MemberID: res.Data.ID, Nickname: res.Data.Nickname})
 	}
-
 	result, err := json.Marshal(res.Status)
 	w.Write(result)
 	redirect(w, "/")
 
 }
 func showSignupHandler(w http.ResponseWriter, r *http.Request) {
-	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/signup.html"))
-	tmpl.ExecuteTemplate(w, "template", struct {
+	var tmpl = template.Must(template.ParseFiles("views/signup.html"))
+	tmpl.ExecuteTemplate(w, "signup", struct {
 		Title string
 	}{Title: "聊天室註冊"})
 }
@@ -202,7 +201,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 func chatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
-	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/chat.html"))
+	var tmpl = template.Must(template.ParseFiles("views/chat.html"))
 
 	vars := mux.Vars(r)
 	roomID, err := strconv.Atoi(vars["roomID"])
@@ -216,7 +215,7 @@ func chatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	roomName := model.GetRoomName(roomID)
 
-	tmpl.ExecuteTemplate(w, "template", struct {
+	tmpl.ExecuteTemplate(w, "chatroom", struct {
 		Title string
 	}{
 		Title: roomName,
@@ -226,9 +225,9 @@ func chatRoomHandler(w http.ResponseWriter, r *http.Request) {
 // create room
 func showCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
-	var tmpl = template.Must(template.ParseFiles("views/template.html", "views/create_room.html"))
+	var tmpl = template.Must(template.ParseFiles("views/create_room.html"))
 
-	tmpl.ExecuteTemplate(w, "template", struct {
+	tmpl.ExecuteTemplate(w, "create", struct {
 		Title string
 	}{Title: "建立聊天室"})
 }
