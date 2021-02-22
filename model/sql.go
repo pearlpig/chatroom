@@ -35,6 +35,7 @@ func createDB() {
 	}
 
 }
+
 func createMenberTable() {
 	db, err := sql.Open("mysql", "root:root@tcp(127.0.0.1:3306)/cyberon_chatroom")
 	if err != nil {

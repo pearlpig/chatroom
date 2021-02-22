@@ -19,13 +19,22 @@ $(function() {
         console.log(roomID)
         ws = initWS(roomID)
     }
+    $("#chatInput").keydown(function(event) {
+        if (event.keyCode == 13) {
+            text = $('#chatInput').val()
+            if (text != undefined && text !== "") {
+                ws.send(text)
+            }
+            text = $('#chatInput').val('')
+        };
+
+    });
     $('#sendBtn').click(function() {
-        console.log("click")
         text = $('#chatInput').val()
-        console.log(text)
         if (text != undefined && text !== "") {
             ws.send(text)
         }
+        text = $('#chatInput').val('')
     })
     $('#quit').click(function() {
         location.href = "/"
@@ -75,6 +84,9 @@ function initWS(roomID) {
     }
     socket.onclose = function() {
         // addMsg("Socket is close", "System")
+    }
+    socket.onerror = function() {
+        alert("asd")
     }
     return socket
 }

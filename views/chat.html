@@ -14,31 +14,40 @@
 
 
 <body>
-    <!-- <style>
-        ul {
-            list-style: none;
+    <style>
+        li {
+            margin-bottom: 5px;
         }
-    </style> -->
-    <div style="border: 1px solid #ac0f0f; padding: 2em">
-        <table style="width:120%; height:30em">
+    </style>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <img src="/images/chat.ico" alt="" width="30" height="24" class="d-inline-block align-top"> Chatroom
+            </a>
+    </nav>
+    <div style="border: 1px solid #eeeeee; padding: 2em;">
+        <table class="table table-bordered" style="width:100%; height:30em;">
             <tr>
-                <td width="10%">
-                    <div style='overflow-x: hidden; overflow-y: scroll;'>
-                        <ul class="roomMemberList">
+                <td width="15%">
+                    <div class="text-center overflow-auto" style='height: 90%;padding-top: 20%;'>
+                        <h5>聊天室成員</h5>
+                        <ul class="roomMemberList list-group ">
                         </ul>
                     </div>
                 </td>
-                <td width="40%">
-                    <div width="80%" style='height: 50%; overflow-x: hidden; overflow-y: scroll;'>
-                        <ul id="chatContent">
+                <td width="80% ">
+                    <div class="overflow-auto " style='height: 90%; margin: 30px ;'>
+                        <ul class="list-group " id="chatContent">
                         </ul>
                     </div>
                 </td>
-
             </tr>
 
         </table>
-        <div><input id="chatInput" type="text" size="150" placeholder="請輸入聊天訊息"><button id="sendBtn" style='margin-left: 1em'>送出</button><button id="quit" style='margin-left: 1em'>離開</button>
+        <div class="d-flex justify-content-center ">
+            <input id="chatInput" type="text" size="120 " placeholder="請輸入聊天訊息 ">
+            <button id="sendBtn" style='margin-left: 1em'>送出</button>
+            <button id="quit" style='margin-left: 1em'>離開</button>
         </div>
     </div>
 </body>

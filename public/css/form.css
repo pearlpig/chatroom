@@ -18,10 +18,6 @@ body {
     margin: auto;
 }
 
-.form .checkbox {
-    font-weight: 400;
-}
-
 .form .form-control {
     position: relative;
     box-sizing: border-box;

@@ -14,14 +14,23 @@
 </head>
 
 <body>
-    <div style="border: 1px solid #cccccc; padding:2em">
-        <a id="toLoginPage" href="#">登入</a>
-        <a id="toSignupPage" href="#">註冊</a>
-        <span id="memberInfo" style="font-weight: bold"><a id="logout" href="#">登出</a><a id="createroomPage" href="#">建立聊天室</a></span>
-        <h3>目前聊天室</h3>
-        <table>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <img src="images/chat.ico" alt="" width="30" height="24" class="d-inline-block align-top"> Chatroom
+            </a>
+            <div class="collapse navbar-collapse d-flex justify-content-end">
+                <div class="navbar-nav" style="font-weight: bold" id="memberInfo">
+                    <a class="nav-link" id="toLoginPage" href="#">登入</a>
+                    <a class="nav-link" id="toSignupPage" href="#">註冊</a>
+                </div>
+            </div>
+    </nav>
+    <div style="border: 1px solid #cccccc; padding:2em ">
+        <table class="table table-hover">
             <thead>
                 <tr>
+                    <th>#</th>
                     <th>聊天室名稱</th>
                     <th>室長</th>
                     <th>操作</th>
@@ -30,10 +39,13 @@
             <tbody id="chatroomList">
             </tbody>
         </table>
-        <table>
-            <tr name="pageList">
-            </tr>
-        </table>
+        <div class="d-flex justify-content-center">
+            <table>
+                <tr name="pageList ">
+                </tr>
+            </table>
+        </div>
+
     </div>
 </body>
 
