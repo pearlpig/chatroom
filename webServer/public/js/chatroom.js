@@ -65,7 +65,6 @@ function initWS(roomID) {
         console.log(m)
         if (m.status == 0) {
             if (m.msg !== undefined) {
-                console.log("sending msg")
                 addMsg(m.nickname[0] + ": " + m.msg)
             }
         } else if (m.status == 1) {
@@ -104,7 +103,8 @@ function removeAllMember2List() {
 }
 
 function addMsg(m) {
-    console.log("add")
     let ul = $('#chatContent')
     ul.append($('<li>').text(m))
+    var div = document.getElementById('scrollMsg');
+    div.scrollTop = div.scrollHeight;
 }
