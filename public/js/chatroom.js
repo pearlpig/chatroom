@@ -10,6 +10,12 @@ $(function() {
             }
         }
     });
+    $(window).scroll(function() {
+        var scrollVal = $(this).scrollTop();
+        console.log("123")
+        console.log(scrollVal)
+            // $("span.qScrollTop").text(scrollVal);
+    });
     // check member
     if (window.WebSocket == undefined) {
         alert("THe browser doesn't support wrbsocket!")
@@ -104,7 +110,8 @@ function removeAllMember2List() {
 }
 
 function addMsg(m) {
-    console.log("add")
     let ul = $('#chatContent')
     ul.append($('<li>').text(m))
+    var div = document.getElementById('scrollMsg');
+    div.scrollTop = div.scrollHeight;
 }
