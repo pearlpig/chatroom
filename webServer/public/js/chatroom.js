@@ -55,7 +55,7 @@ function initWS(roomID) {
     // var socket = new WebSocket("ws://localhost:8080/room/{[0~9]+}/echo")
     var socket = new WebSocket("ws://localhost:8080/room/" + roomID + "/echo")
     socket.onopen = function() {
-        console.log("socket is onopen")
+        console.log("socket connection is open")
         $.ajax({
             url: "/room/" + roomID + "/connRoom",
         })
@@ -82,11 +82,11 @@ function initWS(roomID) {
             })
         }
     }
-    socket.onclose = function() {
-        // addMsg("Socket is close", "System")
-    }
     socket.onerror = function() {
-        alert("asd")
+        console.log("socket connection is close")
+        $.ajax({
+            url: "/room/" + roomID + "disconnRoom"
+        })
     }
     return socket
 }

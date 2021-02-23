@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  chatroom_server_db:
+    build: ./dbServer/
+  chatroom_server_web:
+    build: ./webServer/
+    ports:
+      - "8080:8080"
+    depends_on: 
+      - chatroom_server_db

@@ -32,11 +32,8 @@ $(function() {
                 console.log(result)
                 if (result.status.code == 0) {
                     location.href = "/"
-                } else if (result.status.code == 1) {
-                    $("#createRoomNameErrMsg").show()
-                    $("#createRoomNameErrMsg").text(result.status.msg)
                 } else {
-                    alert("invalid status")
+                    errMsg(checkRoomNameFmt(result.status.msg))
                 }
             }
         });

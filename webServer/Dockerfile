@@ -6,6 +6,4 @@ COPY . chatroom/
 
 WORKDIR /chatroom/
 
-EXPOSE 8080
-
 CMD ./chatroom
