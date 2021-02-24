@@ -30,13 +30,10 @@ $(function() {
                 console.log(data)
                 let result = JSON.parse(data);
                 console.log(result)
-                if (result.status.code == 0) {
+                if (result.code == 0) {
                     location.href = "/"
-                } else if (result.status.code == 1) {
-                    $("#createRoomNameErrMsg").show()
-                    $("#createRoomNameErrMsg").text(result.status.msg)
                 } else {
-                    alert("invalid status")
+                    errMsg(result.msg)
                 }
             }
         });
@@ -44,8 +41,8 @@ $(function() {
     });
 })
 
-function checkRoomNameFmt(roomName) {
 
+function checkRoomNameFmt(roomName) {
     if (roomName.length > 20) {
         return "Room name length should at most 20 character."
     } else if (roomName.length < 1) {
@@ -63,4 +60,9 @@ function getFormData($form) {
     });
 
     return indexed_array;
+}
+
+function errMsg(err) {
+    $('#errBox').children().remove()
+    $('#errBox').append('<span>').attr('style', "color:red; font-size: medium;").text(err)
 }
