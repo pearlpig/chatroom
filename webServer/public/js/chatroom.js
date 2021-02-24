@@ -10,6 +10,12 @@ $(function() {
             }
         }
     });
+    $(window).scroll(function() {
+        var scrollVal = $(this).scrollTop();
+        console.log("123")
+        console.log(scrollVal)
+            // $("span.qScrollTop").text(scrollVal);
+    });
     // check member
     if (window.WebSocket == undefined) {
         alert("THe browser doesn't support wrbsocket!")

@@ -160,7 +160,10 @@ func doLoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error:", err)
 	}
-	res := model.CheckLogin(form)
+	res, err := model.CheckLogin(form)
+	if err != nil {
+		return
+	}
 	if res.Status.Code == 0 {
 		setCookie(&w, r, &Cookies{MemberID: res.Data.ID, Nickname: res.Data.Nickname})
 	}
@@ -185,7 +188,10 @@ func doSignupHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("Error:", err)
 	}
-	res := model.CheckSignup(form)
+	res, err := model.CheckSignup(form)
+	if err != nil {
+		return
+	}
 	if res.Status.Code == 0 {
 		setCookie(&w, r, &Cookies{MemberID: res.Data.ID, Nickname: res.Data.Nickname})
 	}
@@ -213,7 +219,12 @@ func chatRoomHandler(w http.ResponseWriter, r *http.Request) {
 		cookie.RoomID = roomID
 		setCookie(&w, r, cookie)
 	}
-	roomName := model.GetRoomName(roomID)
+	roomName, err := model.GetRoomName(roomID)
+	log.Println(roomName)
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
 
 	tmpl.ExecuteTemplate(w, "chatroom", struct {
 		Title string
@@ -239,20 +250,26 @@ func doCreateRoomHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		log.Println("Error:", err)
+		return
 	}
 	err = schema.NewDecoder().Decode(&form, r.PostForm)
 	if err != nil {
 		log.Println("Error:", err)
+		return
 	}
 	form.MemberID = cookie.MemberID
-	res := model.CheckCreate(form)
-	log.Println(res)
+
+	res, err := model.CheckCreate(form)
+	if err != nil {
+		return
+	}
 	if res.Status.Code == 0 {
 		setCookie(&w, r, &Cookies{RoomID: res.Data.ID, MemberID: cookie.MemberID, Nickname: cookie.Nickname})
 	}
-	result, err := json.Marshal(res)
+	result, err := json.Marshal(res.Status)
 	if err != nil {
 		log.Println("Error: ", err)
+		return
 	}
 	w.Write(result)
 
@@ -267,6 +284,7 @@ func getRoomListHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		log.Println("Error:", err)
+		return
 	}
 
 	var reqRoom Show
@@ -274,12 +292,17 @@ func getRoomListHandler(w http.ResponseWriter, r *http.Request) {
 	err = schema.NewDecoder().Decode(&reqRoom, r.PostForm)
 	if err != nil {
 		log.Println("Error:", err)
+		return
 	}
 	// log.Println(reqRoom)
-	roomList := model.GetRoom(reqRoom.Page)
+	roomList, err := model.GetRoom(reqRoom.Page)
+	if err != nil {
+		return
+	}
 	result, err := json.Marshal(roomList)
 	if err != nil {
 		log.Println("Error: ", err)
+		return
 	}
 	// log.Println(roomList)
 	w.Write(result)
