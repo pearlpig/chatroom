@@ -3,8 +3,10 @@ version: '3'
 services:
   chatroom_server_db:
     build: ./dbServer/
+    container_name: chatroom_server_db
   chatroom_server_web:
     build: ./webServer/
+    container_name: chatroom_server_web
     ports:
       - "8080:8080"
     depends_on: 

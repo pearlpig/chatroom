@@ -168,6 +168,9 @@ func doLoginHandler(w http.ResponseWriter, r *http.Request) {
 		setCookie(&w, r, &Cookies{MemberID: res.Data.ID, Nickname: res.Data.Nickname})
 	}
 	result, err := json.Marshal(res.Status)
+	if err != nil {
+		return
+	}
 	w.Write(result)
 	redirect(w, "/")
 
@@ -196,6 +199,9 @@ func doSignupHandler(w http.ResponseWriter, r *http.Request) {
 		setCookie(&w, r, &Cookies{MemberID: res.Data.ID, Nickname: res.Data.Nickname})
 	}
 	result, err := json.Marshal(res.Status)
+	if err != nil {
+		return
+	}
 	w.Write(result)
 
 }
@@ -203,7 +209,6 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	cookie := http.Cookie{Name: cookieName, MaxAge: -1}
 	http.SetCookie(w, &cookie)
 	redirect(w, "/")
-	return
 }
 func chatRoomHandler(w http.ResponseWriter, r *http.Request) {
 	// t, err := template.ParseFiles("views/layout.html", "views/head.html", "views/index.html")
